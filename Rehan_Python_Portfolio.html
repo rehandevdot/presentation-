@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rehan — Python + Flask Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1b33;
+    --navy2:#112445;
+    --card:#132a52;
+    --card-hi:#17315f;
+    --teal:#22d3b8;
+    --teal-dark:#0ea891;
+    --white:#ffffff;
+    --light:#c9d6ea;
+    --muted:#8ca0c4;
+    --yellow:#f5c451;
+    --purple:#8b7cf6;
+    --pink:#f26d9b;
+    --line:#24406b;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    height:100%;
+    background:var(--navy);
+    color:var(--white);
+    font-family:'Poppins',system-ui,sans-serif;
+    overflow:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.22em;
+    color:var(--teal);
+    text-transform:uppercase;
+  }
+  .eyebrow::before{content:"// ";color:var(--teal-dark);}
+
+  /* ---------- deck shell ---------- */
+  .deck{
+    position:relative;
+    width:100vw;
+    height:100vh;
+  }
+
+  .slide{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    padding:6vh 7vw;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateX(40px);
+    transition:opacity .55s var(--ease), transform .6s var(--ease), visibility 0s linear .6s;
+  }
+  .slide.active{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateX(0);
+    transition:opacity .55s var(--ease), transform .6s var(--ease), visibility 0s linear 0s;
+  }
+  .slide.exit-left{ transform:translateX(-40px); }
+
+  .slide-inner{ width:100%; max-width:1180px; margin:0 auto; position:relative; z-index:2; }
+
+  /* reveal-on-active animation for children, staggered via --d */
+  .reveal{
+    opacity:0;
+    transform:translateY(16px);
+  }
+  .slide.active .reveal{
+    animation:riseIn .7s var(--ease) forwards;
+    animation-delay:var(--d,0s);
+  }
+  @keyframes riseIn{
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* ---------- ambient background blobs ---------- */
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, rgba(34,211,184,.16), rgba(34,211,184,0) 70%);
+    filter:blur(2px);
+    z-index:0;
+    animation:drift 14s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    50%{ transform:translate(-16px,18px) scale(1.06); }
+  }
+
+  /* ---------- nav dots ---------- */
+  .nav{
+    position:fixed;
+    right:28px;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    z-index:20;
+  }
+  .nav button{
+    width:9px;height:9px;border-radius:50%;
+    background:rgba(255,255,255,.22);
+    border:none;cursor:pointer;
+    padding:0;
+    transition:background .3s, transform .3s;
+  }
+  .nav button.active{ background:var(--teal); transform:scale(1.4); }
+  .nav button:hover{ background:var(--light); }
+
+  /* ---------- arrows ---------- */
+  .arrow{
+    position:fixed;
+    top:50%;
+    transform:translateY(-50%);
+    width:44px;height:44px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:rgba(19,42,82,.6);
+    backdrop-filter:blur(6px);
+    color:var(--light);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    z-index:20;
+    transition:background .25s, border-color .25s, transform .25s;
+    font-size:1.1rem;
+  }
+  .arrow:hover{ background:var(--teal); color:var(--navy); border-color:var(--teal); }
+  .arrow.prev{ left:22px; }
+  .arrow.next{ right:78px; }
+  @media (max-width:720px){
+    .arrow{ display:none; }
+    .nav{ right:14px; }
+  }
+
+  /* ---------- progress bar ---------- */
+  .progress{
+    position:fixed; left:0; bottom:0; height:3px;
+    background:linear-gradient(90deg,var(--teal),var(--purple));
+    z-index:25;
+    transition:width .5s var(--ease);
+  }
+
+  .slide-index{
+    position:fixed; left:28px; bottom:24px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.78rem; color:var(--muted); z-index:20;
+    letter-spacing:.05em;
+  }
+  .slide-index b{ color:var(--teal); }
+
+  /* ---------- buttons / links ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-weight:700; font-size:.95rem;
+    padding:14px 26px;
+    border-radius:999px;
+    text-decoration:none;
+    cursor:pointer;
+    border:none;
+    transition:transform .25s var(--ease), box-shadow .25s var(--ease), filter .25s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-solid{ background:var(--teal); color:var(--navy); }
+  .btn-solid:hover{ transform:translateY(-3px); box-shadow:0 14px 30px -10px rgba(34,211,184,.55); }
+  .btn-dark{ background:var(--navy); color:var(--white); border:1px solid var(--line); }
+  .btn-dark:hover{ transform:translateY(-3px); box-shadow:0 14px 30px -10px rgba(0,0,0,.5); background:var(--card-hi); }
+  .btn .arrow-ico{ transition:transform .3s var(--ease); }
+  .btn:hover .arrow-ico{ transform:translateX(4px); }
+
+  .btn::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle, rgba(255,255,255,.35), transparent 60%);
+    opacity:0; transform:scale(.4);
+    transition:opacity .4s, transform .4s;
+  }
+  .btn:active::after{ opacity:1; transform:scale(1); transition:0s; }
+
+  /* pulse ring on the primary CTA to draw the eye */
+  .pulse-wrap{ position:relative; display:inline-block; }
+  .pulse-wrap::before{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:999px;
+    border:1.5px solid var(--teal);
+    animation:pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ opacity:.55; transform:scale(1); }
+    100%{ opacity:0; transform:scale(1.18); }
+  }
+
+  h1,h2,h3{ font-weight:800; letter-spacing:-.02em; }
+
+  /* ============ SLIDE 1 — TITLE ============ */
+  #s1 .role{ font-size:1rem; margin-bottom:18px; }
+  #s1 h1{
+    font-size:clamp(3.2rem,8vw,6rem);
+    line-height:.95;
+    background:linear-gradient(180deg,#fff, #c9e9ff 120%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #s1 .cursor{
+    display:inline-block; width:.5ch; background:var(--teal);
+    animation:blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+  #s1 .tagline{ font-size:1.3rem; color:var(--light); margin:18px 0 6px; }
+  #s1 .rule{ width:70px; height:3px; background:var(--teal); margin:22px 0; border-radius:2px; }
+  #s1 .sub{ color:var(--muted); font-size:.95rem; margin-bottom:44px; }
+  #s1 .sub b{ color:var(--light); font-weight:600; }
+
+  /* ============ SLIDE 2 — ABOUT ============ */
+  .about-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:start; }
+  .about-grid h2{ font-size:clamp(1.9rem,3.4vw,2.6rem); margin:14px 0 20px; }
+  .about-grid p{ color:#b9c8e2; line-height:1.7; font-size:.98rem; max-width:46ch; }
+
+  .stat-row{ display:flex; gap:16px; margin-top:32px; }
+  .stat{
+    background:var(--card); border-radius:16px; padding:20px 14px;
+    text-align:center; flex:1;
+    box-shadow:0 12px 26px -14px rgba(0,0,0,.5);
+    transition:transform .3s var(--ease);
+  }
+  .stat:hover{ transform:translateY(-6px); }
+  .stat .n{ font-size:2rem; font-weight:800; color:var(--teal); }
+  .stat .l{ font-size:.72rem; color:var(--light); margin-top:6px; line-height:1.3; }
+
+  .vit-card{
+    background:var(--navy2); border-radius:18px; padding:34px 32px;
+    position:relative; overflow:hidden;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+  }
+  .vit-card .glow{
+    position:absolute; top:-40px; right:-40px; width:160px; height:160px;
+    background:radial-gradient(circle,rgba(34,211,184,.25),transparent 70%);
+    border-radius:50%;
+  }
+  .vit-card h3{ font-size:1.7rem; margin:10px 0 4px; position:relative; }
+  .vit-card .code{ color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:.85rem; position:relative; }
+  .vit-card hr{ border:none; border-top:1px solid var(--line); margin:22px 0; }
+  .vit-card ul{ list-style:none; display:flex; flex-direction:column; gap:14px; position:relative; }
+  .vit-card li{ display:flex; gap:12px; font-size:.9rem; color:var(--light); align-items:flex-start; }
+  .vit-card li::before{
+    content:""; min-width:7px; height:7px; border-radius:50%; background:var(--teal);
+    margin-top:6px;
+  }
+
+  /* ============ SLIDE 3 — CURRICULUM ============ */
+  #s3 .slide-inner{ max-width:1260px; }
+  #s3 h2{ font-size:clamp(1.9rem,3.2vw,2.5rem); margin:12px 0 6px; }
+  #s3 .lead{ color:var(--muted); font-size:.95rem; margin-bottom:30px; font-family:'JetBrains Mono',monospace; }
+  .curric-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .curric-card{
+    background:var(--card); border-radius:16px; padding:22px 20px;
+    min-height:300px;
+    transition:transform .35s var(--ease), background .35s;
+  }
+  .curric-card:hover{ transform:translateY(-8px); background:var(--card-hi); }
+  .swatch{ width:34px; height:34px; border-radius:9px; margin-bottom:16px; }
+  .curric-card h4{ font-size:1.02rem; margin-bottom:12px; }
+  .curric-card ul{ list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .curric-card li{ font-size:.82rem; color:var(--light); display:flex; gap:8px; align-items:flex-start; }
+  .curric-card li::before{ content:"›"; color:var(--dot,var(--teal)); font-weight:700; }
+
+  /* ============ SLIDE 4 — SKILLS ============ */
+  .skills-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .skill-card{
+    background:var(--navy2); border-radius:18px; padding:32px;
+    box-shadow:0 20px 50px -22px rgba(0,0,0,.6);
+    transition:transform .3s var(--ease);
+  }
+  .skill-card:hover{ transform:translateY(-6px); }
+  .skill-card h3{ font-size:1.5rem; }
+  .skill-card .tag{ font-size:.8rem; font-family:'JetBrains Mono',monospace; margin:6px 0 20px; }
+  .skill-card ul{ list-style:none; display:flex; flex-direction:column; gap:13px; }
+  .skill-card li{ font-size:.9rem; color:var(--light); display:flex; gap:10px; }
+  #s4 h2{ font-size:clamp(1.9rem,3.4vw,2.6rem); margin:12px 0 8px; }
+  #s4 .lead{ color:var(--muted); margin-bottom:30px; }
+
+  /* ============ SLIDE 5 — PROJECT ============ */
+  .project-grid{ display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:start; }
+  #s5 h2{ font-size:clamp(1.9rem,3.6vw,2.7rem); margin:12px 0 16px; line-height:1.08; }
+  #s5 p{ color:#b9c8e2; line-height:1.7; font-size:.95rem; max-width:44ch; margin-bottom:26px; }
+  .feat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .feat{ background:var(--card); border-radius:12px; padding:16px; transition:transform .3s var(--ease); }
+  .feat:hover{ transform:translateY(-5px); }
+  .feat .ico{ width:26px; height:26px; border-radius:6px; background:var(--teal); margin-bottom:10px; }
+  .feat h5{ font-size:.88rem; margin-bottom:4px; }
+  .feat p{ font-size:.72rem; color:var(--muted); margin:0; }
+
+  .browser{
+    background:var(--card); border-radius:16px; overflow:hidden;
+    box-shadow:0 25px 60px -20px rgba(0,0,0,.65);
+  }
+  .browser .bar{ background:#0e2038; padding:12px 16px; display:flex; gap:7px; }
+  .browser .bar span{ width:11px; height:11px; border-radius:50%; }
+  .browser .content{ padding:22px; }
+  .browser .content h4{ margin-bottom:14px; }
+  .row-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--navy2); border-radius:10px; padding:12px 14px; margin-bottom:10px;
+  }
+  .row-item .thumb{ width:32px;height:32px;border-radius:7px;background:rgba(34,211,184,.25); margin-right:12px; }
+  .row-item .name{ display:flex; align-items:center; font-size:.85rem; }
+  .row-item .price{ color:var(--teal); font-weight:700; font-size:.85rem; }
+
+  /* ============ SLIDE 6 — CTA ============ */
+  #s6{ background:radial-gradient(circle at 75% 20%, rgba(11,27,51,.15), transparent 55%), var(--teal); color:var(--navy); }
+  #s6 .eyebrow{ color:var(--navy); }
+  #s6 .eyebrow::before{ color:rgba(11,27,51,.55); }
+  #s6 h2{ font-size:clamp(2.4rem,6vw,4rem); color:var(--navy); margin:10px 0 14px; }
+  #s6 p{ font-size:1.05rem; color:#0b3a33; max-width:46ch; margin-bottom:34px; }
+  #s6 .link-line{ margin-top:20px; font-size:.85rem; color:#0b3a33; }
+
+  /* ============ SLIDE 7 — THANK YOU ============ */
+  #s7{ justify-content:center; text-align:center; }
+  #s7 .slide-inner{ display:flex; flex-direction:column; align-items:center; }
+  #s7 h2{ font-size:clamp(2.6rem,7vw,4.6rem); }
+  #s7 .role{ color:var(--teal); font-size:1.05rem; margin:14px 0 30px; }
+  #s7 .credits{ margin-top:28px; display:flex; flex-direction:column; gap:6px; }
+  #s7 .credits div{ color:var(--light); font-size:.92rem; }
+  #s7 .credits b{ color:var(--white); font-weight:600; }
+  #s7 .credit-rule{ width:90px; height:1px; background:var(--line); margin:26px auto 22px; }
+
+  /* responsive */
+  @media (max-width:980px){
+    .about-grid, .project-grid, .skills-grid{ grid-template-columns:1fr; }
+    .curric-grid{ grid-template-columns:repeat(2,1fr); }
+    .slide{ padding:8vh 6vw; overflow-y:auto; }
+  }
+  @media (max-width:560px){
+    .curric-grid{ grid-template-columns:1fr; }
+    .stat-row{ flex-direction:column; }
+    .arrow.next{ right:20px; top:auto; bottom:60px; }
+    .arrow.prev{ left:20px; top:auto; bottom:60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <section class="slide active" id="s1">
+    <div class="blob" style="width:420px;height:420px; top:-140px; right:-100px;"></div>
+    <div class="blob" style="width:300px;height:300px; bottom:-120px; left:-80px; animation-delay:-6s;"></div>
+    <div class="slide-inner">
+      <p class="eyebrow reveal" style="--d:.05s">python + flask developer</p>
+      <h1 class="reveal" style="--d:.15s">Rehan<span class="cursor">_</span></h1>
+      <p class="tagline reveal" style="--d:.3s">Python Programming Portfolio</p>
+      <div class="rule reveal" style="--d:.4s"></div>
+      <p class="sub reveal" style="--d:.48s">Trained at <b>Vision Institute of Technology (VIT)</b></p>
+      <div class="reveal pulse-wrap" style="--d:.58s">
+        <a class="btn btn-solid" href="https://portfolio-website-api-server-iota.vercel.app/" target="_blank" rel="noopener">
+          Visit Live Portfolio <span class="arrow-ico">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: ABOUT -->
+  <section class="slide" id="s2">
+    <div class="slide-inner about-grid">
+      <div>
+        <p class="eyebrow reveal" style="--d:.05s">about me</p>
+        <h2 class="reveal" style="--d:.12s">From Zero to Full-Stack<br>Python Developer</h2>
+        <p class="reveal" style="--d:.22s">I'm Rehan, a Python programmer who completed a structured, hands-on training program at Vision Institute of Technology (VIT) — from core language fundamentals all the way to object-oriented programming, file handling, external modules, AI basics, and real-world project building with Flask.</p>
+        <div class="stat-row">
+          <div class="stat reveal" style="--d:.32s"><div class="n">21</div><div class="l">Course Modules<br>Completed</div></div>
+          <div class="stat reveal" style="--d:.4s"><div class="n">1</div><div class="l">Full-Stack Project<br>Built</div></div>
+          <div class="stat reveal" style="--d:.48s"><div class="n">2</div><div class="l">Core Skills<br>Python &amp; Flask</div></div>
+        </div>
+      </div>
+      <div class="vit-card reveal" style="--d:.3s">
+        <div class="glow"></div>
+        <p class="eyebrow" style="position:relative">training institute</p>
+        <h3>Vision Institute<br>of Technology</h3>
+        <p class="code">(VIT)</p>
+        <hr>
+        <ul>
+          <li>Structured, project-based Python curriculum</li>
+          <li>Fundamentals through advanced OOP concepts</li>
+          <li>Hands-on Flask web development training</li>
+          <li>Capstone: full-stack e-commerce project</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: CURRICULUM -->
+  <section class="slide" id="s3">
+    <div class="slide-inner">
+      <p class="eyebrow reveal" style="--d:.05s">python curriculum</p>
+      <h2 class="reveal" style="--d:.12s">What I Learned — Course Roadmap</h2>
+      <p class="lead reveal" style="--d:.2s">21 structured modules · setup → syntax → data → OOP → AI → projects</p>
+      <div class="curric-grid">
+        <div class="curric-card reveal" style="--d:.28s; --dot:var(--teal)">
+          <div class="swatch" style="background:var(--teal)"></div>
+          <h4>Foundations</h4>
+          <ul>
+            <li>Setup</li><li>Python Syntax</li><li>Variables</li><li>Typecasting</li>
+            <li>User Input</li><li>Print, Comments &amp; Escape Seq.</li><li>Operators</li>
+          </ul>
+        </div>
+        <div class="curric-card reveal" style="--d:.36s; --dot:var(--yellow)">
+          <div class="swatch" style="background:var(--yellow)"></div>
+          <h4>Control Flow</h4>
+          <ul><li>Conditionals</li><li>Loops</li></ul>
+        </div>
+        <div class="curric-card reveal" style="--d:.44s; --dot:var(--purple)">
+          <div class="swatch" style="background:var(--purple)"></div>
+          <h4>Data Structures</h4>
+          <ul><li>Strings</li><li>Lists</li><li>Tuples</li><li>Sets</li><li>Dictionaries</li></ul>
+        </div>
+        <div class="curric-card reveal" style="--d:.52s; --dot:var(--pink)">
+          <div class="swatch" style="background:var(--pink)"></div>
+          <h4>Advanced &amp; Projects</h4>
+          <ul>
+            <li>Functions</li><li>OOP</li><li>Advanced Concepts</li><li>Files</li>
+            <li>External Modules</li><li>AI Basics</li><li>Projects</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: SKILLS -->
+  <section class="slide" id="s4">
+    <div class="slide-inner">
+      <p class="eyebrow reveal" style="--d:.05s">core skills</p>
+      <h2 class="reveal" style="--d:.12s">Python + Flask</h2>
+      <p class="lead reveal" style="--d:.18s">The two technologies at the core of my full-stack skillset.</p>
+      <div class="skills-grid">
+        <div class="skill-card reveal" style="--d:.28s">
+          <h3>Python</h3>
+          <p class="tag" style="color:var(--teal)">Core programming language</p>
+          <ul>
+            <li>› Variables, typecasting &amp; operators</li>
+            <li>› Conditionals &amp; loops for control flow</li>
+            <li>› Strings, lists, tuples, sets &amp; dictionaries</li>
+            <li>› Functions &amp; object-oriented programming</li>
+            <li>› File handling &amp; external modules</li>
+            <li>› Applied AI fundamentals</li>
+          </ul>
+        </div>
+        <div class="skill-card reveal" style="--d:.4s">
+          <h3>Flask</h3>
+          <p class="tag" style="color:var(--yellow)">Python web framework</p>
+          <ul>
+            <li>› Building RESTful APIs &amp; backend routes</li>
+            <li>› Server-side rendering with templates</li>
+            <li>› Handling forms &amp; user input on the web</li>
+            <li>› Connecting Python logic to a database</li>
+            <li>› Structuring a full-stack web application</li>
+            <li>› Deploying and serving live web projects</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: PROJECT -->
+  <section class="slide" id="s5">
+    <div class="blob" style="width:340px;height:340px; top:-120px; left:-100px;"></div>
+    <div class="slide-inner project-grid">
+      <div>
+        <p class="eyebrow reveal" style="--d:.05s">capstone project</p>
+        <h2 class="reveal" style="--d:.12s">Mini E-Commerce Website with CMS</h2>
+        <p class="reveal" style="--d:.2s">The final project of my training — a full-stack mini e-commerce platform built with Python and Flask, paired with a Content Management System to manage products, content, and site data.</p>
+        <div class="feat-grid">
+          <div class="feat reveal" style="--d:.3s"><div class="ico"></div><h5>Product Catalog</h5><p>Browsable storefront with product listings</p></div>
+          <div class="feat reveal" style="--d:.36s"><div class="ico"></div><h5>CMS Dashboard</h5><p>Backend panel to manage store content</p></div>
+          <div class="feat reveal" style="--d:.42s"><div class="ico"></div><h5>Flask Backend</h5><p>Routes, logic &amp; data handling in Flask</p></div>
+          <div class="feat reveal" style="--d:.48s"><div class="ico"></div><h5>Full-Stack Flow</h5><p>Python logic connected end-to-end</p></div>
+        </div>
+      </div>
+      <div class="browser reveal" style="--d:.3s">
+        <div class="bar">
+          <span style="background:#e36262"></span><span style="background:#f5c451"></span><span style="background:#22d3b8"></span>
+        </div>
+        <div class="content">
+          <h4>Storefront</h4>
+          <div class="row-item"><span class="name"><span class="thumb"></span>Wireless Headphones</span><span class="price">$49.99</span></div>
+          <div class="row-item"><span class="name"><span class="thumb"></span>Smart Watch</span><span class="price">$79.99</span></div>
+          <div class="row-item"><span class="name"><span class="thumb"></span>Running Shoes</span><span class="price">$59.99</span></div>
+          <div class="row-item"><span class="name"><span class="thumb"></span>Backpack</span><span class="price">$34.99</span></div>
+          <a class="btn btn-solid" style="width:100%; justify-content:center; margin-top:6px;" href="https://mini-e-com-two.vercel.app/" target="_blank" rel="noopener">
+            View Live Project <span class="arrow-ico">→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: CTA -->
+  <section class="slide" id="s6">
+    <div class="blob" style="width:420px;height:420px; top:-160px; right:-120px; background:radial-gradient(circle at 30% 30%, rgba(11,27,51,.18), transparent 70%);"></div>
+    <div class="slide-inner">
+      <p class="eyebrow reveal" style="--d:.05s">see it live</p>
+      <h2 class="reveal" style="--d:.12s">Visit My Live Portfolio</h2>
+      <p class="reveal" style="--d:.2s">Explore my projects, skills, and the Python + Flask e-commerce build in action.</p>
+      <div class="reveal pulse-wrap" style="--d:.3s">
+        <a class="btn btn-dark" href="https://portfolio-website-api-server-iota.vercel.app/" target="_blank" rel="noopener">
+          Visit portfolio-website-api-server-iota.vercel.app <span class="arrow-ico">→</span>
+        </a>
+      </div>
+      <p class="link-line reveal" style="--d:.4s">👉 Click the button above to open the live portfolio</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: THANK YOU -->
+  <section class="slide" id="s7">
+    <div class="blob" style="width:380px;height:380px; top:20%; left:50%; transform:translateX(-50%);"></div>
+    <div class="slide-inner">
+      <h2 class="reveal" style="--d:.05s">Thank You</h2>
+      <p class="role reveal" style="--d:.16s">Rehan &nbsp;•&nbsp; Python + Flask Developer</p>
+      <div class="reveal" style="--d:.26s">
+        <a class="btn btn-solid" href="https://portfolio-website-api-server-iota.vercel.app/" target="_blank" rel="noopener">
+          Visit Live Portfolio <span class="arrow-ico">→</span>
+        </a>
+      </div>
+      <div class="credit-rule reveal" style="--d:.36s"></div>
+      <div class="credits reveal" style="--d:.42s">
+        <div><b>Teacher:</b> Murtajis</div>
+        <div><b>Institute:</b> VIT (Vision Institute of Technology)</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<button class="arrow prev" id="prevBtn" aria-label="Previous slide">←</button>
+<button class="arrow next" id="nextBtn" aria-label="Next slide">→</button>
+<nav class="nav" id="nav"></nav>
+<div class="slide-index" id="idx"><b>01</b> / 07</div>
+<div class="progress" id="progress"></div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const nav = document.getElementById('nav');
+  const idxEl = document.getElementById('idx');
+  const progress = document.getElementById('progress');
+  let current = -1;
+
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.addEventListener('click', () => goTo(i));
+    nav.appendChild(b);
+  });
+  const dots = Array.from(nav.children);
+
+  function restartAnimations(slide){
+    const els = slide.querySelectorAll('.reveal');
+    els.forEach(el => {
+      el.style.animation = 'none';
+      void el.offsetWidth; // reflow to restart
+      el.style.animation = '';
+    });
+  }
+
+  function goTo(i){
+    if(i === current || i < 0 || i >= slides.length) return;
+    const dir = i > current ? -1 : 1;
+    if(current >= 0){
+      slides[current].classList.remove('active');
+      slides[current].classList.add(dir === -1 ? 'exit-left' : '');
+      setTimeout(() => slides[current].classList.remove('exit-left'), 650);
+    }
+    slides[i].classList.remove('exit-left');
+    slides[i].classList.add('active');
+    current = i;
+    restartAnimations(slides[current]);
+    dots.forEach((d, k) => d.classList.toggle('active', k === i));
+    idxEl.innerHTML = '<b>' + String(i+1).padStart(2,'0') + '</b> / ' + String(slides.length).padStart(2,'0');
+    progress.style.width = ((i+1)/slides.length*100) + '%';
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => goTo(current-1));
+  document.getElementById('nextBtn').addEventListener('click', () => goTo(current+1));
+
+  window.addEventListener('keydown', (e) => {
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){ e.preventDefault(); goTo(current+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goTo(current-1); }
+  });
+
+  // basic touch swipe
+  let touchX = null;
+  window.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  window.addEventListener('touchend', e => {
+    if(touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if(Math.abs(dx) > 60) goTo(current + (dx < 0 ? 1 : -1));
+    touchX = null;
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
